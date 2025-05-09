@@ -3,6 +3,7 @@ from sqlalchemy import String, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import DeclarativeBase
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class Base(DeclarativeBase):
@@ -10,6 +11,26 @@ class Base(DeclarativeBase):
 
 
 db = SQLAlchemy(model_class=Base)
+
+
+class User(db.Model):
+    __tablename__ = "user"  # 指定資料表名稱
+    # 1. 主鍵 id
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # 2. 使用者名稱，必填
+    username: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    # 4. 電子郵件，必填
+    email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    # 3. 密碼，必填
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    def __init__(self, username: str, password: str, email: str):
+        self.username = username
+        self.email = email
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        return check_password_hash(self.password, password)
 
 
 class Restaurant(db.Model):

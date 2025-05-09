@@ -5,6 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "boto3>=1.38.12",
+    "commitizen>=4.6.3",
     "flask>=3.1.0",
+    "flask-jwt-extended>=4.7.1",
     "flask-sqlalchemy>=3.1.1",
 ]
