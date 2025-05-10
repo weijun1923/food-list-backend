@@ -8,6 +8,7 @@ dependencies = [
     "boto3>=1.38.12",
     "commitizen>=4.6.3",
     "flask>=3.1.0",
+    "flask-cors>=5.0.1",
     "flask-jwt-extended>=4.7.1",
     "flask-sqlalchemy>=3.1.1",
 ]
