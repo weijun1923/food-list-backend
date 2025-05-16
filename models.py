@@ -60,3 +60,14 @@ class Restaurant(db.Model):
         self.short_description = short_description
         self.is_published = is_published
         self.created_at = datetime.now()
+
+
+class TokenBlocklist(db.Model):
+    __tablename__ = "token_blocklist"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    jti: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    def __init__(self, jti: str, created_at: datetime):
+        self.jti = jti
+        self.created_at = created_at

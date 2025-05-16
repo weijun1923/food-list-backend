@@ -1,10 +1,13 @@
+from datetime import datetime
+from datetime import timezone
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import create_refresh_token
+from flask_jwt_extended import get_jwt
 
-from models import db, User
+from models import db, User, TokenBlocklist
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -15,8 +18,8 @@ def register():
     username = data.get("username")
     password = data.get("password")
     email: str = data.get("email")
-    if User.query.filter_by(username=username).first():
-        return jsonify({"msg": "Username already exists"}), 400
+    if User.query.filter_by(email=email).first():
+        return jsonify({"msg": "email already exists"}), 400
 
     user = User(username, password, email)
     db.session.add(user)
@@ -37,7 +40,12 @@ def login():
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
 
-    return jsonify(access_token=access_token, refresh_token=refresh_token, username=username), 200
+    return (
+        jsonify(
+            access_token=access_token, refresh_token=refresh_token, username=username
+        ),
+        200,
+    )
 
 
 @auth_bp.route("/refresh", methods=["POST"])
@@ -46,3 +54,14 @@ def refresh():
     identity = get_jwt_identity()
     access_token = create_access_token(identity=identity)
     return jsonify(access_token=access_token)
+
+
+# Callback function to check if a JWT exists in the database blocklist
+@auth_bp.route("/logout", methods=["DELETE"])
+@jwt_required()
+def modify_token():
+    jti = get_jwt()["jti"]
+    now = datetime.now(timezone.utc)
+    db.session.add(TokenBlocklist(jti=jti, created_at=now))
+    db.session.commit()
+    return jsonify(msg="JWT revoked")
