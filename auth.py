@@ -14,12 +14,21 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
-    data = request.get_json()
+    if not request.is_json:
+        return jsonify({"msg": "Unsupported Media Type. Expected application/json"}, 415)
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
     password = data.get("password")
     email: str = data.get("email")
-    if User.query.filter_by(email=email).first():
-        return jsonify({"msg": "email already exists"}), 400
+    if not username or not password or not email:
+        return jsonify({"msg": "Missing username, password, or email"}), 400
+    # 檢查唯一性
+    existing = User.query.filter(
+        db.or_(User.email == email, User.username == username)
+    ).first()
+    if existing:
+        field = "email" if existing.email == email else "username"
+        return jsonify(msg=f"{field} already exists"), 409
 
     user = User(username, password, email)
     db.session.add(user)
