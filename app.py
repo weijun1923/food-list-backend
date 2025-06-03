@@ -24,7 +24,8 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
-    CORS(app)
+    CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
+
 
     # Register blueprints
     app.register_blueprint(auth_bp)
