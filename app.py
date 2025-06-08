@@ -4,6 +4,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from auth import auth_bp
+from image_manager import image_bp
 from config import Config
 from models import db, TokenBlocklist
 
@@ -26,9 +27,9 @@ def create_app():
     jwt.init_app(app)
     CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
 
-
     # Register blueprints
     app.register_blueprint(auth_bp)
+    app.register_blueprint(image_bp)
 
     # Create tables within application context
     with app.app_context():
@@ -38,4 +39,4 @@ def create_app():
 
 
 if __name__ == "__main__":
-    create_app().run(debug=True)
+    create_app().run()

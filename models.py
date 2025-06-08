@@ -1,6 +1,7 @@
 import uuid
+from decimal import Decimal
 from datetime import datetime
-from sqlalchemy import String, Boolean, DateTime, UUID, func
+from sqlalchemy import String, DateTime, UUID, func, NUMERIC
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import DeclarativeBase
 from flask_sqlalchemy import SQLAlchemy
@@ -49,33 +50,34 @@ class User(db.Model):
 
 class Restaurant(db.Model):
     __tablename__ = "restaurant"  # 指定資料表名稱
-    # 6. 主鍵 id
-    id: Mapped[int] = mapped_column(primary_key=True)
-    # 7. 餐廳名稱，必填
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    # 8. 圖片網址，可為空
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
+    restaurant_name: Mapped[str] = mapped_column(String(120), nullable=False)
     image_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    # 9. 簡短描述，可為空
-    short_description: Mapped[str | None] = mapped_column(
-        String(255), nullable=True)
-    # 10. 是否已上架，預設 false
-    is_published: Mapped[bool] = mapped_column(Boolean, default=False)
-    # 11. 建立時間，預設為現在
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.now)
+    dish_name: Mapped[str] = mapped_column(
+        String(120), nullable=False)
+    cuisine: Mapped[str] = mapped_column(String(80), nullable=False)
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False)
+    rating: Mapped[Decimal] = mapped_column(
+        NUMERIC(2, 1), nullable=True, default="0.0")
+    menu_category: Mapped[str] = mapped_column(String(50), nullable=False)
 
     def __init__(
         self,
-        name: str,
+        restaurant_name: str,
+        dish_name: str,
+        cuisine: str,
+        menu_category: str,
         image_url: str | None = None,
-        short_description: str | None = None,
-        is_published: bool = False,
+        rating: Decimal = Decimal("0.0"),
     ):
-        self.name = name
+        self.restaurant_name = restaurant_name
+        self.dish_name = dish_name
+        self.cuisine = cuisine
+        self.menu_category = menu_category
         self.image_url = image_url
-        self.short_description = short_description
-        self.is_published = is_published
-        self.created_at = datetime.now()
+        self.rating = rating
 
 
 class TokenBlocklist(db.Model):
