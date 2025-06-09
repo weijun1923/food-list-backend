@@ -26,16 +26,6 @@ s3 = boto3.client(
 )
 
 
-def _presign_post(key: str, content_type: str):
-    return s3.generate_presigned_post(
-        Bucket=BUCKET_NAME,
-        Key=key,
-        Fields={"Content-Type": content_type},
-        Conditions=[{"Content-Type": content_type}],
-        ExpiresIn=EXPIRY,
-    )
-
-
 def _presign_put(key: str):
     return s3.generate_presigned_url(
         "put_object",
@@ -62,7 +52,7 @@ def presigned_upload():
     urls = []
     for data in files:
         key = data['name']  # e.g. "restaurant_name/xxx.png"
-        urls.append({"key": key, **_presign_post(key, "image/png")})
+        urls.append({"key": key, **_presign_put(key)})
     return jsonify(urls)
 
 
