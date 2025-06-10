@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 import boto3
-from models import db, Restaurant
 
 load_dotenv()
 
@@ -43,22 +42,26 @@ def _presign_delete(key: str):
 
 
 @image_bp.route("/presigned/upload", methods=["POST"])
-# @jwt_required()
+@jwt_required()
 def presigned_upload():
     # [{"name":"a.png"}, ...]
+    if not request.json:
+        return jsonify({"error": "Invalid JSON data"}), 400
     files = request.json.get("files")
     if not isinstance(files, list):
         files = [files]
     urls = []
     for data in files:
         key = data['name']  # e.g. "restaurant_name/xxx.png"
-        urls.append({"key": key, **_presign_put(key)})
+        urls.append({"key": key, "url": _presign_put(key)})
     return jsonify(urls)
 
 
 @image_bp.route("/presigned/update", methods=["POST"])
 @jwt_required()
 def presigned_update():
+    if not request.json:
+        return jsonify({"error": "Invalid JSON data"}), 400
     keys = request.json.get("keys")             # ["uploads/xxx.png", ...]
     if not isinstance(keys, list):
         keys = [keys]
@@ -69,6 +72,8 @@ def presigned_update():
 @image_bp.route("/presigned/delete", methods=["POST"])
 @jwt_required()
 def presigned_delete():
+    if not request.json:
+        return jsonify({"error": "Invalid JSON data"}), 400
     keys = request.json.get("keys")
     if not isinstance(keys, list):
         keys = [keys]

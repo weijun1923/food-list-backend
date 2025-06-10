@@ -25,8 +25,16 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
-    CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
-
+    CORS(
+    app,
+    resources={r"/api/*": {"origins": [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"       # ← 兩種都允許最保險
+    ]}},
+    supports_credentials=True,               # ← 讓 Set-Cookie 能用
+    allow_headers=["Content-Type", "X-CSRF-TOKEN"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    )
     # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(image_bp)

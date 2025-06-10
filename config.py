@@ -12,9 +12,13 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or "jwt-secret-key"
     JWT_VERIFY_SUB = False
+    JWT_ALGORITHM = "HS256"  
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     JWT_TOKEN_LOCATION        = ["cookies"]     # 只從 cookie 讀寫 JWT
     JWT_COOKIE_CSRF_PROTECT   = True            # 開 CSRF 防護
-    JWT_COOKIE_SAMESITE = "None"         # CSRF 防護設定
     JWT_COOKIE_SECURE = False         # 是否使用 HTTPS，開發時可設為 False
+    JWT_ACCESS_COOKIE_NAME = "access_token"   
+    JWT_REFRESH_COOKIE_NAME = "refresh_token"
+    JWT_COOKIE_DOMAIN = "localhost"  
+    JWT_COOKIE_SAMESITE = "Lax"

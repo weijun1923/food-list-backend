@@ -1,7 +1,8 @@
 import uuid
 from decimal import Decimal
 from datetime import datetime
-from sqlalchemy import String, DateTime, UUID, func, NUMERIC
+from sqlalchemy import String, DateTime, UUID, func, NUMERIC,Integer
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import DeclarativeBase
 from flask_sqlalchemy import SQLAlchemy
@@ -53,7 +54,11 @@ class Restaurant(db.Model):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     restaurant_name: Mapped[str] = mapped_column(String(120), nullable=False)
-    image_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    image_keys: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String(255)), 
+        nullable=True,
+        server_default="{}" 
+    )
     dish_name: Mapped[str] = mapped_column(
         String(120), nullable=False)
     cuisine: Mapped[str] = mapped_column(String(80), nullable=False)
@@ -62,6 +67,7 @@ class Restaurant(db.Model):
     rating: Mapped[Decimal] = mapped_column(
         NUMERIC(2, 1), nullable=True, default="0.0")
     menu_category: Mapped[str] = mapped_column(String(50), nullable=False)
+    price:Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     def __init__(
         self,
@@ -69,15 +75,17 @@ class Restaurant(db.Model):
         dish_name: str,
         cuisine: str,
         menu_category: str,
-        image_url: str | None = None,
+        image_keys: list[str] | None = None,
         rating: Decimal = Decimal("0.0"),
+        price: int = 0
     ):
         self.restaurant_name = restaurant_name
         self.dish_name = dish_name
         self.cuisine = cuisine
         self.menu_category = menu_category
-        self.image_url = image_url
+        self.image_keys = image_keys or []
         self.rating = rating
+        self.price = price
 
 
 class TokenBlocklist(db.Model):

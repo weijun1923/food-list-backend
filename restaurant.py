@@ -12,18 +12,27 @@ def add_restaurant():
 
     data = request.get_json(silent=True) or {}
     restaurant_name = data.get("restaurant_name")
-    image_url = data.get("image_url")
+    image_keys= data.get("image_keys")
     dish_name = data.get("dish_name")
     cuisine = data.get("cuisine")
+    menu_category = data.get("menu_category")
+    price = data.get("price")
 
-    if not restaurant_name or not dish_name or not cuisine:
+
+    if not restaurant_name or not dish_name or not cuisine or not menu_category:
         return jsonify({"msg": "Missing restaurant name, dish name, or cuisine"}), 400
+    try:
+        price = int(price) if price is not None else 0
+    except (ValueError, TypeError):
+        return jsonify({"msg": "Price must be a valid integer"}), 400
 
     new_restaurant = Restaurant(
         restaurant_name=restaurant_name,
-        image_url=image_url,
+        image_keys=image_keys,
         dish_name=dish_name,
-        cuisine=cuisine
+        cuisine=cuisine,
+        menu_category=menu_category,
+        price=price
     )
 
     db.session.add(new_restaurant)
