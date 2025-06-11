@@ -3,7 +3,7 @@ from decimal import Decimal
 from datetime import datetime
 from sqlalchemy import String, DateTime, UUID, func, NUMERIC,Integer
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.orm import DeclarativeBase
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -53,7 +53,37 @@ class Restaurant(db.Model):
     __tablename__ = "restaurant"  # 指定資料表名稱
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
-    restaurant_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    restaurant_name: Mapped[str] = mapped_column(
+        String(120), nullable=False, unique=True)  # 餐廳名稱，必填且唯一
+    image_key: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        server_default="{}"  # 預設為空陣列
+    )
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=True,
+    )
+    restaurant_menu: Mapped[list["RestaurantMenu"]] = relationship(
+        "RestaurantMenu", back_populates="restaurant", lazy=True
+    )
+    def __init__(self, restaurant_name: str, image_key: str | None = None):
+        self.restaurant_name = restaurant_name
+        self.image_key = image_key 
+
+
+class RestaurantMenu(db.Model):
+    __tablename__ = "restaurant_menu"  # 指定資料表名稱
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
+    restaurant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), db.ForeignKey("restaurant.id"), nullable=False)
+    restaurant: Mapped["Restaurant"] = relationship(
+        "Restaurant", back_populates="restaurant_menu")
     image_keys: Mapped[list[str] | None] = mapped_column(
         ARRAY(String(255)), 
         nullable=True,
@@ -68,18 +98,29 @@ class Restaurant(db.Model):
         NUMERIC(2, 1), nullable=True, default="0.0")
     menu_category: Mapped[str] = mapped_column(String(50), nullable=False)
     price:Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+    updated_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        server_onupdate=func.now(),
+        nullable=False
+    )
 
     def __init__(
         self,
-        restaurant_name: str,
+        restaurant_id: uuid.UUID,
         dish_name: str,
         cuisine: str,
         menu_category: str,
         image_keys: list[str] | None = None,
         rating: Decimal = Decimal("0.0"),
         price: int = 0
-    ):
-        self.restaurant_name = restaurant_name
+    ):  
+        self.restaurant_id = restaurant_id
         self.dish_name = dish_name
         self.cuisine = cuisine
         self.menu_category = menu_category

@@ -40,6 +40,17 @@ def _presign_delete(key: str):
         ExpiresIn=EXPIRY,
     )
 
+def _presign_get(key: str) -> str:
+    return s3.generate_presigned_url(
+        "get_object",
+        Params={
+            "Bucket": BUCKET_NAME,
+            "Key": key,
+        },
+        ExpiresIn=EXPIRY,
+    )
+
+
 
 @image_bp.route("/presigned/upload", methods=["POST"])
 @jwt_required()
@@ -62,10 +73,13 @@ def presigned_upload():
 def presigned_update():
     if not request.json:
         return jsonify({"error": "Invalid JSON data"}), 400
-    keys = request.json.get("keys")             # ["uploads/xxx.png", ...]
+    datas = request.get_json(silent=True) or {}
+    keys = datas.get("keys")             # ["uploads/xxx.png", ...]
     if not isinstance(keys, list):
         keys = [keys]
-    urls = [{"key": k, "url": _presign_put(k)} for k in keys]
+    urls = []
+    for key in datas:
+        urls.append({"key": key, "url": _presign_put(key)})
     return jsonify(urls)
 
 
@@ -74,8 +88,25 @@ def presigned_update():
 def presigned_delete():
     if not request.json:
         return jsonify({"error": "Invalid JSON data"}), 400
-    keys = request.json.get("keys")
+    datas = request.get_json(silent=True) or {}
+    keys = datas.get("keys")             # ["uploads/xxx.png", ...]
     if not isinstance(keys, list):
         keys = [keys]
-    urls = [{"key": k, "url": _presign_delete(k)} for k in keys]
+    urls = []
+    for key in datas:
+        urls.append({"key": key, "url": _presign_delete(key)})
+    return jsonify(urls)
+
+@image_bp.route("/presigned/get", methods=["POST"])
+@jwt_required()
+def presigned_get():
+    if not request.json:
+        return jsonify({"error": "Invalid JSON data"}), 400
+    datas = request.get_json(silent=True) or {}
+    keys = datas.get("keys")             # ["uploads/xxx.png", ...]
+    if not isinstance(keys, list):
+        keys = [keys]
+    urls = []
+    for key in datas:
+        urls.append({"key": key, "url": _presign_get(key)})
     return jsonify(urls)

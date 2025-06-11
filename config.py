@@ -1,24 +1,31 @@
 import os
 from datetime import timedelta
-from typing import Optional
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-
-
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "super-secret-key"
     SQLALCHEMY_DATABASE_URI = "postgresql://postgres.akaotykfvgucqeafbffv:ads101250101@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or "jwt-secret-key"
+    
+    # 重要：統一 JWT Secret Key 名稱
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET") or "jwt-secret-key"
+    
     JWT_VERIFY_SUB = False
     JWT_ALGORITHM = "HS256"  
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
-    JWT_TOKEN_LOCATION        = ["cookies"]     # 只從 cookie 讀寫 JWT
-    JWT_COOKIE_CSRF_PROTECT   = True            # 開 CSRF 防護
-    JWT_COOKIE_SECURE = False         # 是否使用 HTTPS，開發時可設為 False
+    JWT_TOKEN_LOCATION = ["cookies"]
+    JWT_COOKIE_CSRF_PROTECT = True
+    JWT_COOKIE_SECURE = False  # 開發環境設為 False
     JWT_ACCESS_COOKIE_NAME = "access_token"   
     JWT_REFRESH_COOKIE_NAME = "refresh_token"
-    JWT_COOKIE_DOMAIN = "localhost"  
-    JWT_COOKIE_SAMESITE = "Lax"
+    
+    # 修正：本地開發使用 "Lax"，生產環境使用 "None"
+    JWT_COOKIE_SAMESITE = "Lax"  # 本地開發時使用 "Lax"
+    # JWT_COOKIE_SAMESITE = "None"  # 生產環境且使用 HTTPS 時使用 "None"
+    
+    # 新增：設定 cookie 的域名和路徑
+    JWT_COOKIE_DOMAIN = None  # 本地開發時設為 None
+    JWT_ACCESS_COOKIE_PATH = "/"
+    JWT_REFRESH_COOKIE_PATH = "/"

@@ -12,8 +12,11 @@ def add_restaurant():
 
     data = request.get_json(silent=True) or {}
     restaurant_name = data.get("restaurant_name")
-    image_key= data.get("image_key")
-    
+    image_keys= data.get("image_keys")
+    dish_name = data.get("dish_name")
+    cuisine = data.get("cuisine")
+    menu_category = data.get("menu_category")
+    price = data.get("price")
 
 
     if not restaurant_name or not dish_name or not cuisine or not menu_category:
