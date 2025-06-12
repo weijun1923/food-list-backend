@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
+from sqlalchemy.exc import IntegrityError
 from models import db, Restaurant
 restaurant_bp = Blueprint("restaurant", __name__, url_prefix="/api/restaurant")
 
@@ -13,6 +14,7 @@ def add_restaurant():
     data = request.get_json(silent=True) or {}
     restaurant_name = data.get("restaurant_name")
     image_key = data.get("image_key")
+    print(image_key)
 
     if not restaurant_name:
         return jsonify({"msg": "Missing restaurant name, dish name, or cuisine"}), 400
@@ -23,7 +25,16 @@ def add_restaurant():
     )
 
     db.session.add(new_restaurant)
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except IntegrityError as err:
+        db.session.rollback()
+
+        if 'restaurant_restaurant_name_key' in str(err.orig):
+            return jsonify({ "msg": "the restaurant name is aleady exity" }), 409
+
+        return jsonify({ "msg": "database error" }), 400
 
     return jsonify({"msg": "Restaurant added successfully"}), 201
 
@@ -40,6 +51,8 @@ def get_all_restaurants():
                 "id": restaurant.id,
                 "restaurant_name": restaurant.restaurant_name,
                 "image_key": restaurant.image_key,
+                "created_at": restaurant.created_at.isoformat(),
+                "updated_at": restaurant.updated_at.isoformat(),
             }
             restaurant_list.append(restaurant_data)
 

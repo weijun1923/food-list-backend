@@ -78,8 +78,9 @@ def presigned_update():
     if not isinstance(keys, list):
         keys = [keys]
     urls = []
-    for key in datas:
-        urls.append({"key": key, "url": _presign_put(key)})
+    for key in keys:
+        if key is not None and isinstance(key, str):
+            urls.append({"key": key, "url": _presign_put(key)})
     return jsonify(urls)
 
 
@@ -93,8 +94,9 @@ def presigned_delete():
     if not isinstance(keys, list):
         keys = [keys]
     urls = []
-    for key in datas:
-        urls.append({"key": key, "url": _presign_delete(key)})
+    for key in keys:
+        if key is not None and isinstance(key, str):
+            urls.append({"key": key, "url": _presign_delete(key)})
     return jsonify(urls)
 
 @image_bp.route("/presigned/get", methods=["POST"])
@@ -107,6 +109,7 @@ def presigned_get():
     if not isinstance(keys, list):
         keys = [keys]
     urls = []
-    for key in datas:
-        urls.append({"key": key, "url": _presign_get(key)})
-    return jsonify(urls)
+    for key in keys:
+        if key is not None and isinstance(key, str):
+            urls.append( _presign_get(key))
+    return jsonify({ "urls": urls })

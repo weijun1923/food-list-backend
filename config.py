@@ -7,6 +7,9 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "super-secret-key"
     SQLALCHEMY_DATABASE_URI = "postgresql://postgres.akaotykfvgucqeafbffv:ads101250101@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True
+    }
     
     # 重要：統一 JWT Secret Key 名稱
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET") or "jwt-secret-key"
