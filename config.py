@@ -1,11 +1,14 @@
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+load_dotenv()
+
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "super-secret-key"
-    SQLALCHEMY_DATABASE_URI = "postgresql://postgres.akaotykfvgucqeafbffv:ads101250101@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+    SQLALCHEMY_DATABASE_URI = os.getenv("SUPABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True
