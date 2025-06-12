@@ -39,6 +39,9 @@ class User(db.Model):
         onupdate=func.now(),
         nullable=False,
     )
+    role: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="user"
+    )
 
     def __init__(self, username: str, password: str, email: str):
         self.username = username

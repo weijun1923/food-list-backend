@@ -11,7 +11,7 @@ restaurant_menu_bp = Blueprint(
 def add_restaurant_menu(restaurant_id):
 
     restaurant = Restaurant.query.filter_by(
-        restaurant_id=restaurant_id).first()
+        id=restaurant_id).first()
     if not restaurant:
         return jsonify({"msg": "Restaurant not found"}), 404
 
@@ -23,12 +23,15 @@ def add_restaurant_menu(restaurant_id):
     dish_name = data.get("dish_name")
     cuisine = data.get("cuisine")
     menu_category = data.get("menu_category")
-    price = data.get("price")
+    price_raw = data.get("price")
+    print("price", price_raw)
 
     if not dish_name or not cuisine or not menu_category:
         return jsonify({"msg": "Missing dish name, or cuisine"}), 400
+    if price_raw in (None, ""):
+        return jsonify({"msg": "Price is required"}), 400
     try:
-        price = int(price) if price is not None else 0
+        price = int(price_raw) if price_raw is not None else 0
     except (ValueError, TypeError):
         return jsonify({"msg": "Price must be a valid integer"}), 400
 
@@ -38,6 +41,7 @@ def add_restaurant_menu(restaurant_id):
         dish_name=dish_name,
         cuisine=cuisine,
         menu_category=menu_category,
+        price=price
     )
     try:
         restaurant.restaurant_menu.append(new_restaurant_menu)
@@ -53,33 +57,34 @@ def add_restaurant_menu(restaurant_id):
 @jwt_required()
 def get_restaurant_menu(restaurant_id):
     try:
-        menus = RestaurantMenu.query.filter_by(
-            restaurant_id=restaurant_id).all()
+        restaurant = db.session.get(Restaurant, restaurant_id)
+        if restaurant is None:
+            return jsonify({"msg": "Restaurant not found"}), 404
+
+        menus = restaurant.restaurant_menu
+
         if not menus:
             return jsonify({"msg": "No menus found for this restaurant"}), 404
-        menu_list = []
 
-        for item in menus:
-            menu_data = {
-                "id": item.id,
-                "restaurant_name": item.restaurant.restaurant_name,
-                "restaurant_id": item.restaurant_id,
-                "image_key": item.image_key,
-                "dish_name": item.dish_name,
-                "cuisine": item.cuisine,
-                "menu_category": item.menu_category,
-                "price": item.price
-            }
-            menu_list.append(menu_data)
+        menu_list = [{
+            "id": m.id,
+            "restaurant_name": restaurant.restaurant_name,
+            "restaurant_id": restaurant_id,
+            "image_key": m.image_key,
+            "dish_name": m.dish_name,
+            "cuisine": m.cuisine,
+            "menu_category": m.menu_category,
+            "price": m.price
+        } for m in menus]
 
         return jsonify({
-            "msg": "Restaurants retrieved successfully",
+            "msg": "Menus retrieved successfully",
             "menus": menu_list,
             "count": len(menu_list)
         }), 200
 
     except Exception as e:
-        return jsonify({"msg": "Error retrieving restaurants", "error": str(e)}), 500
+        return jsonify({"msg": "Error retrieving menus", "error": str(e)}), 500
 
 
 # UPDATE restaurant

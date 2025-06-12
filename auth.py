@@ -9,7 +9,7 @@ from flask_jwt_extended import get_jwt
 from flask_jwt_extended import set_access_cookies
 from flask_jwt_extended import set_refresh_cookies
 from flask_jwt_extended import unset_jwt_cookies
-from sqlalchemy import or_                     
+from sqlalchemy import or_
 from models import db, User, TokenBlocklist
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
@@ -53,14 +53,12 @@ def login():
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
 
-       # 把 JWT 寫進 Cookie
-    resp = jsonify(login=True, username=user.username)
+    # 把 JWT 寫進 Cookie
+    resp = jsonify(login=True, user_id=user.id, role=user.role)
     set_access_cookies(resp, access_token)
     set_refresh_cookies(resp, refresh_token)
-    return resp, 200
-
-    
-    
+    data = {username: user.username, role: user.role}
+    return resp, 200, jsonify(data)
 
 
 @auth_bp.route("/refresh", methods=["POST"])
@@ -82,5 +80,6 @@ def modify_token():
     db.session.add(TokenBlocklist(jti=jti, created_at=now))
     db.session.commit()
     resp = jsonify(logout=True)
-    unset_jwt_cookies(resp)             # 同時清掉 access & refresh (及 CSRF) cookies
+    # 同時清掉 access & refresh (及 CSRF) cookies
+    unset_jwt_cookies(resp)
     return resp, 200
