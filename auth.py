@@ -42,10 +42,12 @@ def register():
 @auth_bp.route("/login", methods=["POST"])
 def login():
     if not request.is_json:
-        return jsonify({"msg": "Unsupported Media Type. Expected application/json"}, 415)
+        return jsonify({"msg": "Unsupported Media Type. Expected application/json"}), 415
+
     data = request.get_json(silent=True) or {}
     email = data.get("email")
     password = data.get("password")
+
     user = User.query.filter_by(email=email).first()
     if not user or not user.check_password(password):
         return jsonify({"msg": "Bad username or password"}), 401
@@ -54,11 +56,16 @@ def login():
     refresh_token = create_refresh_token(identity=user.id)
 
     # 把 JWT 寫進 Cookie
-    resp = jsonify(login=True, user_id=user.id, role=user.role)
+    resp = jsonify(
+        login=True,
+        user_id=user.id,
+        username=user.username,   # 加上 username
+        role=user.role
+    )
     set_access_cookies(resp, access_token)
     set_refresh_cookies(resp, refresh_token)
-    data = {username: user.username, role: user.role}
-    return resp, 200, jsonify(data)
+
+    return resp, 200            # 只回傳 Response 與狀態碼
 
 
 @auth_bp.route("/refresh", methods=["POST"])

@@ -61,10 +61,7 @@ def get_restaurant_menu(restaurant_id):
         if restaurant is None:
             return jsonify({"msg": "Restaurant not found"}), 404
 
-        menus = restaurant.restaurant_menu
-
-        if not menus:
-            return jsonify({"msg": "No menus found for this restaurant"}), 404
+        menus = restaurant.restaurant_menu or []        # ← 永遠是 list
 
         menu_list = [{
             "id": m.id,
@@ -81,8 +78,7 @@ def get_restaurant_menu(restaurant_id):
             "msg": "Menus retrieved successfully",
             "menus": menu_list,
             "count": len(menu_list)
-        }), 200
-
+        }), 200                                         # ← 就算 0 筆也給 200
     except Exception as e:
         return jsonify({"msg": "Error retrieving menus", "error": str(e)}), 500
 
