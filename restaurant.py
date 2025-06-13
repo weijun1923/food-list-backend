@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
+
 from models import db, Restaurant
 restaurant_bp = Blueprint("restaurant", __name__, url_prefix="/api/restaurant")
 
@@ -147,3 +149,45 @@ def delete_restaurant(restaurant_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error deleting restaurant", "error": str(e)}), 500
+
+@restaurant_bp.route("/with-menus", methods=["GET"])
+@jwt_required()
+def restaurants_with_menus():
+    try:
+        # 使用 joinedload 一次撈取餐廳及其菜單
+        restaurants = (
+            db.session.query(Restaurant)
+            .options(joinedload(Restaurant.restaurant_menu))
+            .all()
+        )
+        # 組裝回傳資料
+        data = []
+        for r in restaurants:
+            data.append({
+                "id": str(r.id),
+                "restaurant_name": r.restaurant_name,
+                "image_key": r.image_key,
+                "created_at": str(r.created_at) if r.created_at else None,
+                "updated_at": str(r.updated_at) if r.updated_at else None,
+                "menus": [
+                    {
+                        "id": str(m.id),
+                        "restaurant_id": str(r.id),
+                        "image_key": m.image_key,
+                        "dish_name": m.dish_name,
+                        "cuisine": m.cuisine,
+                        "menu_category": m.menu_category,
+                        "price": m.price,
+                    }
+                    for m in (r.restaurant_menu or [])
+                ]
+            })
+
+        return jsonify({
+            "msg": "Restaurants with menus retrieved successfully",
+            "restaurants": data,
+            "count": len(data)
+        }), 200
+
+    except Exception as e:
+        return jsonify({"msg": "Error retrieving restaurants with menus", "error": str(e)}), 500
