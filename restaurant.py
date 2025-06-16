@@ -132,7 +132,7 @@ def update_restaurant(restaurant_id):
 # DELETE restaurant
 
 
-@restaurant_bp.route("/<int:restaurant_id>", methods=["DELETE"])
+@restaurant_bp.route("/<uuid:restaurant_id>", methods=["DELETE"])
 @jwt_required()
 def delete_restaurant(restaurant_id):
     try:
@@ -149,6 +149,9 @@ def delete_restaurant(restaurant_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error deleting restaurant", "error": str(e)}), 500
+    
+
+
 
 @restaurant_bp.route("/with-menus", methods=["GET"])
 @jwt_required()

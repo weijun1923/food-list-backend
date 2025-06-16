@@ -71,9 +71,14 @@ class Restaurant(db.Model):
         onupdate=func.now(),
         nullable=True,
     )
+
     restaurant_menu: Mapped[list["RestaurantMenu"]] = relationship(
-        "RestaurantMenu", back_populates="restaurant", lazy="select", cascade='all, delete-orphan'
+        "RestaurantMenu",
+        back_populates="restaurant",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
+
 
     def __init__(self, restaurant_name: str, image_key: str | None = None):
         self.restaurant_name = restaurant_name
@@ -84,10 +89,12 @@ class RestaurantMenu(db.Model):
     __tablename__ = "restaurant_menu"  # 指定資料表名稱
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
+    
     restaurant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), db.ForeignKey("restaurant.id"), nullable=False)
+        UUID(as_uuid=True), db.ForeignKey("restaurant.id",ondelete="CASCADE"), nullable=False)
     restaurant: Mapped["Restaurant"] = relationship(
-        "Restaurant", back_populates="restaurant_menu")
+        "Restaurant", back_populates="restaurant_menu",passive_deletes=True)
+
     image_key: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
