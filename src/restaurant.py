@@ -96,7 +96,7 @@ def get_restaurant(restaurant_id):
 # UPDATE restaurant
 
 
-@restaurant_bp.route("/<int:restaurant_id>", methods=["PUT"])
+@restaurant_bp.route("/<uuid:restaurant_id>", methods=["PUT"])
 @jwt_required()
 def update_restaurant(restaurant_id):
     if not request.is_json:
