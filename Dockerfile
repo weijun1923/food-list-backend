@@ -1,38 +1,48 @@
-# ---------- Stage 1: deps ----------
+# syntax=docker/dockerfile:1
+###############################################################################
+# Stage 0 ── 基礎映像：共用設定                                             #
+###############################################################################
 FROM python:3.12-slim AS base
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
+WORKDIR /app
 
+###############################################################################
+# Stage 1 ── deps：使用 uv 建立虛擬環境 .venv，安裝所有依賴                  #
+###############################################################################
 FROM base AS deps
-WORKDIR /app
 
-# 1) 下載 uv 二進位
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv  
+# ① 複製 uv 二進位（官方 distroless 映像只含 /uv）                          #
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv               
 
-# 2) 複製鎖檔與專案元資料
-COPY pyproject.toml uv.lock README.md ./
-
-# 3) 複製源碼目錄
-COPY src/ ./src
-
-# 4) 安裝依賴到系統解釋器
-ENV UV_SYSTEM_PYTHON=1
+# ② 複製鎖檔後先安裝 transitive 依賴                                        #
+COPY pyproject.toml uv.lock ./
+# 在專案路徑內建立 .venv（uv 預設），不碰系統 Python                         #
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen
+    uv sync --frozen --no-install-project                                   
 
-# ---------- Stage 2: runtime ----------
-FROM base
+# ③ 再複製源碼並安裝本專案（含 gunicorn 等可執行檔）                       #
+COPY src/ ./src
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen                                                      
+
+###############################################################################
+# Stage 2 ── runtime：只帶 .venv 與程式碼，映像更小                          #
+###############################################################################
+FROM python:3.12-slim AS runtime
 WORKDIR /app
 
-# 複製已解析好的 site-packages 與腳本
-COPY --from=deps /usr/local/lib/python3.12/site-packages \
-               /usr/local/lib/python3.12/site-packages
-COPY --from=deps /usr/local/bin /usr/local/bin
+# ① 複製整個 .venv 及 uv（方便日後 sync）                                   #
+COPY --from=deps /app/.venv /app/.venv
+COPY --from=deps /usr/local/bin/uv /usr/local/bin/uv
 
-# 最後再複製程式碼
+# ② 複製應用程式碼                                                         #
 COPY src/ ./src
 
-ENV PORT 5000
+# ③ 把 .venv/bin 加進 PATH 以使用 gunicorn 等指令                            #
+ENV PATH="/app/.venv/bin:$PATH"                                            
+ENV PORT=5000
 EXPOSE 5000
 
-CMD ["gunicorn", "-w", "4", "-k", "gthread", "-b", "0.0.0.0:5000", "src.app:create_app()"]
+# ④ 使用 --factory 啟動工廠函式                                            #
+CMD ["gunicorn","-w", "4", "-k", "gthread","-b", "0.0.0.0:5000", "src.app:create_app()"]
