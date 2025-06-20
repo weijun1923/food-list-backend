@@ -32,7 +32,7 @@ def create_app():
         resources={r"/api/*": {"origins": [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
-            "https://food-frontend-1009537220252.asia-east1.run.app/"      
+            "https://food-frontend-1009537220252.asia-east1.run.app"      
         ]}},
         supports_credentials=True,               # ← 讓 Set-Cookie 能用
         allow_headers=["Content-Type", "X-CSRF-TOKEN"],
